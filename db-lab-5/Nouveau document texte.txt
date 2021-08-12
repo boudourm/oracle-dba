@@ -1,0 +1,71 @@
+--15)
+CREATE OR REPLACE TRIGGER Nb_COURSES_BATEAU
+AFTER INSERT ON COURSES 
+FOR EACH ROW
+BEGIN 
+     UPDATE BATEAU 
+	 SET NbC =NbC +1 
+	 WHERE :New.Nbat = Nbat ;
+	 
+	 UPDATE COMPETITION
+	 SET PREMIER = :New.nbat
+	 WHERE :New.Score = 1 
+	 AND   :New.Ncomp = Ncomp ;	
+END ;
+/
+
+--16)
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (102 , 210 , 2) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (102 , 240 , 1) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (102 , 270 , 4) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (103 , 210 , 4) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (103 , 215 , 3) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 210 , 1) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 215 , 2) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 220 , 4) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 240 , 3) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 260 , 5) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 265 , 1) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 270 , 3) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (105 , 210 , 3) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (105 , 215 , 1) ;
+
+--17)
+SELECT * FROM BATEAU ;
+SELECT * FROM COMPETITION ;
+
+--18)
+CREATE OR REPLACE TRIGGER SUPPRESSION_COURSES
+AFTER DELETE ON COURSES
+FOR EACH ROW 
+BEGIN
+     UPDATE BATEAU 
+	 SET NbC = NbC - 1 
+	 WHERE nbat = :Old.nbat ;
+	 
+	 UPDATE COMPETITION 
+	 SET PREMIER = NULL
+	 WHERE ncomp = :Old.ncomp
+	 AND   PREMIER = :Old.nbat ;
+END;
+/
+
+--19)
+CREATE OR REPLACE TRIGGER MODIFICATION_SCORE
+BEFORE  UPDATE OF Score ON COURSES
+FOR EACH ROW 
+BEGIN
+     UPDATE COMPETITION
+	 SET PREMIER = :Old.nbat
+	 WHERE :Old.score <> 1
+	 AND   :New.score = 1
+	 AND   :Old.ncomp = ncomp ;
+	 
+	 UPDATE COMPETITION
+	 SET PREMIER = NULL 
+	 WHERE :Old.score = 1
+	 AND   :New.score <> 1
+	 AND   :New.ncomp = ncomp;
+	 
+END ;
+/ 

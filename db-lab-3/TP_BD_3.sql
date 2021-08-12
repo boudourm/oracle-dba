@@ -1,0 +1,339 @@
+
+/*==============================================================*/
+/* SCRIPT : Gestion des Droits                                  */
+/*==============================================================*/
+--A)
+--1)
+CONNECT system/pwd;
+
+--2)
+DROP USER CASANOVA  CASCADE ;
+
+CREATE USER CASANOVA IDENTIFIED BY pwd ;
+
+--3)
+GRANT ALL PRIVILEGES  to CASANOVA ;
+
+--4)
+CONNECT CASANOVA/pwd ;
+
+--B)
+--1)
+CREATE TABLE BATEAU (
+    nbat    NUMBER(3)  ,
+	nombat  VARCHAR2(40) ,
+	sponsor VARCHAR2(40)  );
+
+--2)
+INSERT INTO BATEAU (nbat , nombat , sponsor) VALUES (102 , 'TASSILI' , 'DJEZZY') ;
+INSERT INTO BATEAU (nbat , nombat , sponsor) VALUES (103 , 'El BAHDJA' , 'BNA') ;
+INSERT INTO BATEAU (nbat , nombat , sponsor) VALUES (104 , 'LA COLOMBE' , 'NEDJMA') ;
+INSERT INTO BATEAU (nbat , nombat , sponsor) VALUES (105 , 'HOGGAR' , 'BNA') ;
+
+--3)
+INSERT INTO BATEAU (nbat , nombat , sponsor) VALUES (102 , 'AIGLE NOIR' , 'BNA') ;
+
+--4)
+
+ALTER TABLE BATEAU
+ADD CONSTRAINT PK_NBAT PRIMARY KEY (nbat) ;
+
+/*==============================================================*/
+/* REMARQUE :ORA-02437: cannot validate (CASANOVA.PK_NBAT) - primary key violated*/
+/*==============================================================*/
+
+UPDATE BATEAU
+SET nbat = 106
+WHERE nombat = 'AIGLE NOIR' ;
+
+ALTER TABLE BATEAU
+ADD CONSTRAINT PK_NBAT PRIMARY KEY (nbat) ;
+
+--5)
+INSERT INTO BATEAU VALUES (NULL,'GRAND BLEU' , 'CONDOR') ;
+
+/*
+ORA-01400: cannot insert NULL into ("CASANOVA"."BATEAU"."NBAT")
+Oui la Clé Primaire doit toujours Contenir une Valeur
+*/
+
+--6)
+UPDATE BATEAU
+SET nbat = 110 
+WHERE nbat = 102 ;
+/* Oui la Modification est Permise */
+
+UPDATE BATEAU
+SET nbat = 102 
+WHERE nbat = 110 ;
+
+---7)
+UPDATE BATEAU
+SET nbat = 103 
+WHERE nbat = 105 ;
+/*
+ORA-00001: unique constraint (CASANOVA.PK_NBAT) violated
+ORACLE permet la Modification de la Clé primaire si et seulement si la nouvelle
+Valeur n'exsiste pas déjà dans le même champ d'une autre tuple déjà existant
+dans la Table Modifié
+*/
+
+--8)
+CREATE TABLE PARTICIPANTS (
+    npart   NUMBER(3)    ,
+    nompart VARCHAR2(40)  ,
+    nbat    NUMBER(3)  ,
+	CONSTRAINT PK_NPART PRIMARY KEY (npart) ,
+	CONSTRAINT FK_PARTICIPANTS_BATEAU_NBAT FOREIGN KEY (nbat)
+	REFERENCES BATEAU (nbat)
+);
+
+--9)
+INSERT INTO PARTICIPANTS VALUES (320 , 'MOHAMMED' , 104) ;
+INSERT INTO PARTICIPANTS VALUES (470 , 'ALI' , 103) ;
+INSERT INTO PARTICIPANTS VALUES (601 , 'OMAR' , 102) ;
+INSERT INTO PARTICIPANTS VALUES (720 , 'MUSTAFA' , 105) ;
+
+--10)
+INSERT INTO PARTICIPANTS VALUES (510 , 'BRAHIM' , 115) ;
+/*
+ORA-02291: integrity constraint (CASANOVA.FK_BATEAU_NBAT) violated - parent key
+not found
+*/
+--11)
+CREATE TABLE COURSES (
+	nbat  NUMBER(3)  ,
+	ncomp NUMBER(3)   ,
+	score NUMBER(3) ,
+    CONSTRAINT PK_NBAT_NCOMP PRIMARY KEY (nbat , ncomp) ,
+    CONSTRAINT FK_COURSES_BATEAU_NBAT FOREIGN KEY (nbat)
+    REFERENCES BATEAU (nbat) ,
+    CONSTRAINT FK_COURSES_COMPETITION_NCOMP FOREIGN KEY (ncomp)
+    REFERENCES COMPETTTION (ncomp)	
+);
+/*
+REFERENCES COMPETTTION (ncomp) 
+ERROR at line 9:
+ORA-00942: table or view does not exist
+*/
+
+--12)
+CREATE TABLE COMPETITION (
+      ncomp     NUMBER(3)    ,
+	  nomcomp   VARCHAR2(40) ,
+      datcomp   DATE          ,
+      prixcomp  NUMBER(10)   ,
+      CONSTRAINT PK_NCOMP PRIMARY KEY (ncomp)	  
+);
+
+CREATE TABLE COURSES (
+	nbat  NUMBER(3)  ,
+	ncomp NUMBER(3)   ,
+	score NUMBER(3) ,
+    CONSTRAINT PK_NBAT_NCOMP PRIMARY KEY (nbat , ncomp) ,
+    CONSTRAINT FK_COURSES_BATEAU_NBAT FOREIGN KEY (nbat)
+    REFERENCES BATEAU (nbat) ,
+    CONSTRAINT FK_COURSES_COMPETITION_NCOMP FOREIGN KEY (ncomp)
+    REFERENCES COMPETITION (ncomp)	
+);
+--13)
+INSERT INTO COURSES VALUES (102 , 210 , 2) ;
+/*
+ORA-02291: integrity constraint (CASANOVA.FK_COURSES_COMPETITION_NCOMP)
+violated - parent key not found
+*/
+
+--14)
+ALTER TABLE COURSES 
+DISABLE CONSTRAINT FK_COURSES_COMPETITION_NCOMP ;
+
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (102 , 210 , 2) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (102 , 240 , 1) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (102 , 270 , 4) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (103 , 210 , 4) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (103 , 215 , 3) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 210 , 1) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 215 , 2) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 220 , 4) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 240 , 3) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 260 , 5) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 265 , 1) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (104 , 270 , 3) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (105 , 210 , 3) ;
+INSERT INTO COURSES (nbat , ncomp , score) VALUES (105 , 215 , 1) ;
+
+--15)
+ALTER TABLE COURSES 
+ENABLE CONSTRAINT FK_COURSES_COMPETITION_NCOMP ;
+/*
+ORA-02298: cannot validate (CASANOVA.FK_COURSES_COMPETITION_NCOMP) - parent
+keys not found
+*/
+
+--16)
+INSERT INTO COMPETITION (ncomp , nomcomp , datcomp , prixcomp) VALUES (200 , 'LE GRAND TOUR' , '21/03/200' , 1000000) ;
+INSERT INTO COMPETITION (ncomp , nomcomp , datcomp , prixcomp) VALUES (210 , 'COURSE DE LA LIBERTE' , '05/05/2004' , 1000000) ;
+INSERT INTO COMPETITION (ncomp , nomcomp , datcomp , prixcomp) VALUES (215 , 'LE GRAND TOUR' , '20/03/2005' , 1100000) ;
+INSERT INTO COMPETITION (ncomp , nomcomp , datcomp , prixcomp) VALUES (220 , 'TROPHEE BARBEROUSSE' , '01/08/2005' , 1500000) ;
+INSERT INTO COMPETITION (ncomp , nomcomp , datcomp , prixcomp) VALUES (240 , 'COURSE DE LA LIBERTE' , '10/05/2007' , 1500000) ;
+INSERT INTO COMPETITION (ncomp , nomcomp , datcomp , prixcomp) VALUES (260 , 'TROPHEE BARBEROUSSE' , '01/08/2009' , 2000000) ;
+INSERT INTO COMPETITION (ncomp , nomcomp , datcomp , prixcomp) VALUES (265 , 'LE GRAND TOUR' , '21/03/2010' , 2000000) ;
+INSERT INTO COMPETITION (ncomp , nomcomp , datcomp , prixcomp)VALUES (270 , 'COURSE DE LA LIBERTE' , '08/05/2010' , 1800000) ;
+
+ALTER TABLE COURSES 
+ENABLE CONSTRAINT FK_COURSES_COMPETITION_NCOMP ;
+
+--17)
+ALTER TABLE COURSES
+DROP CONSTRAINT FK_COURSES_COMPETITION_NCOMP ;
+
+ALTER TABLE COURSES
+DROP CONSTRAINT FK_COURSES_BATEAU_NBAT ;
+
+ALTER TABLE PARTICIPANTS
+DROP CONSTRAINT FK_PARTICIPANTS_BATEAU_NBAT;
+
+ALTER TABLE COURSES
+ADD CONSTRAINT FK_COURSES_COMPETITION_NCOMP
+FOREIGN KEY (ncomp) 
+REFERENCES COMPETITION (ncomp) 
+ON DELETE CASCADE;
+
+
+ALTER TABLE COURSES
+ADD CONSTRAINT FK_COURSES_BATEAU_NBAT
+FOREIGN KEY (nbat)
+REFERENCES BATEAU (nbat)
+ON DELETE CASCADE;
+
+
+ALTER TABLE PARTICIPANTS
+ADD CONSTRAINT FK_PARTICIPANTS_BATEAU_NBAT 
+FOREIGN KEY (nbat)
+REFERENCES BATEAU (nbat)
+ON DELETE SET NULL;
+
+--18)
+ALTER TABLE BATEAU
+ADD CONSTRAINT UNQ_NOMBAT UNIQUE (nombat);
+
+ALTER TABLE BATEAU
+ADD CONSTRAINT NTNLL_NOMBAT CHECK (nombat IS NOT NULL) ;
+
+--19)
+INSERT INTO BATEAU (nbat, sponsor) VALUES (106, 'CEVITAL');
+/*
+ORA-02290: check constraint (CASANOVA.NTNLL_NOMBAT) violated
+*/
+ALTER TABLE BATEAU
+DISABLE CONSTRAINT NTNLL_NOMBAT ;
+/*
+Table altered.
+*/
+INSERT INTO BATEAU (nbat, sponsor) VALUES (106, 'CEVITAL');
+/*
+ORA-00001: unique constraint (CASANOVA.PK_NBAT) violated
+*/
+ALTER TABLE BATEAU
+DISABLE CONSTRAINT PK_NBAT ;
+/*
+ORA-02297: cannot disable constraint (CASANOVA.PK_NBAT) - dependencies exist
+*/
+ALTER TABLE COURSES
+DISABLE CONSTRAINT  FK_COURSES_BATEAU_NBAT ;
+/*
+Table altered.
+*/
+ALTER TABLE PARTICIPANTS
+DISABLE CONSTRAINT FK_PARTICIPANTS_BATEAU_NBAT;
+/*
+Table altered.
+*/
+ALTER TABLE BATEAU
+DISABLE CONSTRAINT PK_NBAT ;
+/*
+Table altered.
+*/
+INSERT INTO BATEAU (nbat, sponsor) VALUES (106, 'CEVITAL');
+/*
+1 row created.
+*/
+ALTER TABLE BATEAU
+ENABLE CONSTRAINT NTNLL_NOMBAT ;
+/*
+ORA-02293: cannot validate (CASANOVA.NTNLL_NOMBAT) - check constraint violated
+*/
+	
+--20)
+INSERT INTO BATEAU VALUES (112, 'LA COLOMBE','CONDOR');
+/*
+ORA-00001: unique constraint (CASANOVA.UNQ_NOMBAT) violated
+*/
+ALTER TABLE BATEAU
+DISABLE CONSTRAINT UNQ_NOMBAT ;
+
+INSERT INTO BATEAU VALUES (112, 'LA COLOMBE','CONDOR');
+
+--21)
+ALTER TABLE COMPETITION
+ADD CONSTRAINT CHK_NOMCOMP CHECK (prixcomp <=9500000 AND prixcomp>= 1000000) ;
+
+--22)
+INSERT INTO COMPETITION VALUES (211,' LE GRAND TOUR','20-03-2003', 15000000) ;
+/*
+ORA-02290: check constraint (CASANOVA.CHK_NOMCOMP) violated
+*/
+ALTER TABLE COMPETITION	
+DROP CONSTRAINT CHK_NOMCOMP ;
+
+ALTER TABLE COMPETITION
+ADD CONSTRAINT CHK_NOMCOMP CHECK (prixcomp <=19500000 AND prixcomp>= 1000000) ; 
+                                                                   19500000
+INSERT INTO COMPETITION VALUES (211,' LE GRAND TOUR','20-03-2003', 15000000) ;
+
+--23)
+
+ALTER TABLE BATEAU
+ENABLE constraint  NTNLL_NOMBAT ;
+/*
+ORA-02293: cannot validate (CASANOVA.NTNLL_NOMBAT) - check constraint violated
+*/
+	
+UPDATE BATEAU
+SET nombat = 'NOMBAT_106_CEVITAL'
+WHERE nbat = 106 AND sponsor = 'CEVITAL' ;
+ALTER TABLE BATEAU
+ENABLE constraint  NTNLL_NOMBAT ;
+
+
+ALTER TABLE BATEAU
+ENABLE CONSTRAINT PK_NBAT ;
+
+/*
+ORA-02437: cannot validate (CASANOVA.PK_NBAT) - primary key violated
+*/
+UPDATE BATEAU
+SET nbat = 107
+WHERE nbat = 106 AND sponsor = 'CEVITAL';
+ALTER TABLE BATEAU
+ENABLE CONSTRAINT PK_NBAT ;
+
+
+ALTER TABLE COURSES
+ENABLE CONSTRAINT  FK_COURSES_BATEAU_NBAT ;
+ALTER TABLE PARTICIPANTS
+ENABLE CONSTRAINT FK_PARTICIPANTS_BATEAU_NBAT;
+
+ALTER TABLE BATEAU
+ENABLE CONSTRAINT UNQ_NOMBAT ;
+/*
+ORA-02299: cannot validate (CASANOVA.UNQ_NOMBAT) - duplicate keys found
+*/
+UPDATE BATEAU
+SET nombat = 'LA COLOMBE 112'
+WHERE nbat = 112 ;
+UPDATE BATEAU
+SET nombat = 'LA COLOMBE 104'
+WHERE nbat = 104 ;
+ALTER TABLE BATEAU
+ENABLE CONSTRAINT UNQ_NOMBAT ;
